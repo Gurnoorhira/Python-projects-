@@ -1,0 +1,186 @@
+from Board import Board #import Board class from Board.py
+
+class BattleShipGame:
+    def __init__(self,size=10,player_1='',player_2='',player_1_grid=[],player_2_grid=[],ships=[],ship_lengths=[]):
+        """Constructor for BattleShipGame class which initializes parameters of the class"""
+        self.size=size
+        self.player_1=player_1
+        self.player_2=player_2
+        self.player_1_grid=player_1_grid
+        self.player_2_grid=player_2_grid
+        self.ships=ships
+        self.ship_lengths=ship_lengths
+
+    def run_game(self):
+        """ puts all functions required to run through game and uses while loop with conditionals to make sure game runs smoothly until there is a winner"""
+        Board.get_board(self,self.player_1_grid)
+        Board.get_board(self,self.player_2_grid)
+        battleShip.display_boards(self.player_1_grid, self.player_1, False)
+        battleShip.place_ships(self.player_1)
+        battleShip.display_boards(self.player_2_grid, self.player_2, False)
+        battleShip.place_ships(self.player_2)
+
+        current_player = self.player_1
+        game_over = False
+        while not game_over:
+            game_over = battleShip.take_turn(current_player, len(self.player_1_grid))
+
+            if current_player == self.player_1:
+                current_player = self.player_2
+            else:
+                current_player = self.player_1
+
+    def take_turn(self, current_player, grid):
+        """displays both board then asks player to enter coordinates to fire, then calls the register shot function from Board class to make the shot"""
+        game_over = False
+        is_player_done = False
+        battleShip.display_boards(grid, current_player, True)
+        while not is_player_done:
+            coord = input('Enter x y coordinates to fire')
+            coordinates = coord.split()
+            is_player_done = Board.register_shot(self,int(coordinates[0]), int(coordinates[1]), current_player)
+
+            if is_player_done:
+                game_over = battleShip.is_game_over(current_player)
+
+        return game_over
+
+    def is_game_over(self,current_player):
+        """checks to see if the grid has HH MM and blank spaces then the game is over whereas if there still ship names on the grid the game is not over, then if game is over it declares the winner"""
+        if current_player == self.player_1:
+            grid = self.player_2_grid
+        else:
+            grid = self.player_1_grid
+        for row in range(len(grid)):
+            for col in range(len(grid[0])):
+                if grid[row][col] != ' ' and grid[row][col] != 'HH' and grid[row][col] != 'MM':
+                    return False
+        print(current_player, "is WINNER!")
+        return True
+
+    def place_ships(self,current_player):
+        """asks user for coordinates to place a ship then checks if coordinate is allowed, if coordinate is allowed it calls place_ship method from Board class to place the ship then displays the board with the new ship"""
+        for i in range(len(ships)):
+            coordinate_allowed = False
+            while not coordinate_allowed:
+                coordinates = input('enter x y coordinates to place the %s' % ships[i])
+                coord = coordinates.split()
+                right_or_down = input('Enter right or down(r or d)')
+                if current_player == self.player_1:
+                    coordinate_allowed = battleShip.is_coordinate_allowed(coord, self.player_1_grid, right_or_down, i)
+                else:
+                    coordinate_allowed = battleShip.is_coordinate_allowed(coord, self.player_2_grid, right_or_down, i)
+
+                if coordinate_allowed:
+                    if current_player == self.player_1:
+                        Board.place_ship(self,self.player_1_grid, self.ships[i], int(coord[0]), int(coord[1]), self.ship_lengths[i],
+                                   right_or_down)
+                        battleShip.display_boards(self.player_1_grid, self.player_1, False)
+                    elif current_player == player_2:
+                        Board.place_ship(self,self.player_2_grid, self.ships[i], int(coord[0]), int(coord[1]), self.ship_lengths[i],
+                                   right_or_down)
+                        battleShip.display_boards(self.player_2_grid, self.player_2, False)
+
+    def is_coordinate_allowed(self,coord, player_grid, right_or_down, ship_index):
+        """checks to see if the coordinate is in range of the boord and does not overlap another ship for both conditions: either ship positions to right or down"""
+        coordinate_allowed = True
+        right_length = len(player_grid[0])
+        down_length = len(player_grid)
+        row_coord = int(coord[0])
+        col_coord = int(coord[1])
+        if row_coord < 0 or row_coord >= right_length or col_coord >= down_length or col_coord < 0:
+            print('Shot coordinates are out of range, please try again!!')
+            return False
+
+        if right_or_down == 'r':
+            if col_coord + self.ship_lengths[ship_index] > right_length:
+                print('Invalid position or overlapping ships, try again.')
+                return False
+
+            for col in range(col_coord, col_coord + self.ship_lengths[ship_index]):
+                if player_grid[row_coord][col] != ' ':
+                    print('Invalid position or overlapping ships, try again.')
+                    return False
+
+        elif right_or_down == 'd':
+            if row_coord + self.ship_lengths[ship_index] > down_length:
+                print('Invalid position or overlapping ships, try again.')
+                return False
+
+            for row in range(row_coord, row_coord + self.ship_lengths[ship_index]):
+                if player_grid[row][col_coord] != ' ':
+                    print('Invalid position or overlapping ships, try again.')
+                    return False
+
+        if not coordinate_allowed:
+            print('Invalid position or overlapping ships, try again.')
+        return coordinate_allowed
+
+
+
+    def display_boards(self,grid, player, display_both):
+        """Displays the battle ships boards, depending on the boolean value of display_both it either displays both boards side by side and masks the opponents ships or just displays one board with ships"""
+        if not display_both:
+            print(player, ': prepare to place your fleet')
+            print('\t0\t1\t2\t3\t4\t5\t6\t7\t8\t9')
+            print('-----------------------------------------')
+            for row in range(len(grid)):
+                for col in range(len(grid[0])):
+                    if col == 9:
+                        print('|\t' + grid[row][col] + '', end='\n')
+                    # print('\n')
+                    elif grid[row][col] == ' ':
+                        print('|\t' + grid[row][col] + '', end='')
+
+
+                    else:
+                        print('|\t' + grid[row][col] + '', end='')
+
+                print('-----------------------------------------')
+
+        else:
+            print("  0     1       2     3    4     5    6     7      8    9", end='\t\t\t')
+            print("  0     1       2     3    4     5    6     7      8    9")
+            print("---------------------------------------------------------- ", end='\t\t\t')
+            print("---------------------------------------------------------- ")
+
+            for i in range(len(self.player_1_grid)):
+                for j in range(len(self.player_1_grid[i])):
+                    if self.player_1_grid[i][j] == ' ':
+                        print('| ', self.player_1_grid[i][j], ' ', end='')
+                    else:
+                        if player == self.player_2:
+                            if self.player_1_grid[i][j] != 'HH' and self.player_1_grid[i][j] != 'MM':
+                                print('|', '  ', ' ', end='')
+                            else:
+                                print('|', self.player_1_grid[i][j], ' ', end='')
+                        else:
+                            print('|', self.player_1_grid[i][j], ' ', end='')
+
+                print('\t\t', end='')
+                for j in range(len(self.player_2_grid[i])):
+                    if self.player_2_grid[i][j] == ' ':
+                        print('| ', self.player_2_grid[i][j], ' ', end='')
+                    else:
+                        if player == self.player_1:
+                            if self.player_2_grid[i][j] != 'HH' and self.player_2_grid[i][j] != 'MM':
+                                print('|', '  ', ' ', end='')
+                            else:
+                                print('|', self.player_2_grid[i][j], ' ', end='')
+                        else:
+                            print('|', self.player_2_grid[i][j], ' ', end='')
+
+                print()
+
+"""CONSTANTS"""
+size=10
+player_1='player1'
+player_2='player2'
+ships = ['Carrier', 'Battleship', 'Cruiser', 'Submarine', 'Destroyer']
+ship_lengths = [5, 4, 3, 3, 2]
+player_1_grid = []
+player_2_grid = []
+if __name__ == '__main__':
+    """Creating an instance of battleshipgame by putting in the constants as parameters than calling run game method to run the full program"""
+    battleShip=BattleShipGame(size,player_1,player_2,player_1_grid,player_2_grid,ships,ship_lengths)
+    battleShip.run_game()
