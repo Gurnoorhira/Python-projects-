@@ -1,0 +1,222 @@
+def get_player(player_num):
+    """asking players to enter their names"""
+    player=input("Player "+ str(player_num)+ " please tell me your name: ")
+    return player
+
+def get_player_move(player):
+    """asking the player for an integer that represents the cup they want to move stones from"""
+    move=int(input(player + " What cup do you want to move? "))
+    return move
+
+def make_move(top_cups,bottom_cups,mancala,move_cup):
+    """This function takes cup the player wants to move in the parameter alone with top cup,bottom cup, and mancala.
+    The function then makes the move by distributing the stones into the following cups."""
+    num_stones_to_move=0
+    top_length=len(top_cups[0])
+
+    if move_cup <= top_cups[0][top_length-1]: #if in top cups
+        num_stones_to_move=top_cups[1][move_cup-1] #getting how many stones to move from cup and assigning them to variable
+        top_cups[1][move_cup-1]=0 #setting given cup to zero since we are taking the stones out
+    else: #if move cup is in bottom cups
+        num_stones_to_move=bottom_cups[1][bottom_cups[0][0]-move_cup]#same procedure as top
+        bottom_cups[1][bottom_cups[0][0]-move_cup]=0
+
+    is_done=False #boolean
+
+    while not is_done: #while the move is not done
+        if move_cup <= top_cups[0][top_length-1]: # if cup is in top cups
+            for cup in range(move_cup,len(top_cups[0])):
+                if num_stones_to_move>0: # if there are still stones needed to be moved then distribute them into next cups until for loop is done
+                    top_cups[1][cup]+=1
+                    num_stones_to_move-=1
+                else:
+                    break
+            if num_stones_to_move==1: #if after first row is done and there is one stone left, put in mancala
+                mancala[1]+=1
+                num_stones_to_move-=1
+                return True
+            elif num_stones_to_move==0:
+                return False
+            else: #if more than one stone left then put one in mancala, decrease stones to move and set next cup to last cup of bottom cups
+                mancala[1]+=1
+                num_stones_to_move-=1
+                move_cup=bottom_cups[0][len(bottom_cups[0])-1]
+        else: #if move cup is in bottom cups
+            bot=bottom_cups[0][0]
+            j=bottom_cups[0][0]-move_cup
+            for j in range(j,-1,-1):#loop runs reverse from last column towards first column of bottom cups
+                if num_stones_to_move>0:
+                    bottom_cups[1][j]+=1
+                    num_stones_to_move-=1
+                else:
+                    break
+            if num_stones_to_move==1:
+                mancala[0]+=1
+                num_stones_to_move-=1
+                return True
+            elif num_stones_to_move==0:
+                return False
+            else:
+                mancala[0]+=1
+                num_stones_to_move-=1
+                move_cup=top_cups[0]
+    return False
+
+def draw_board(top_cup,bottom_cup,manc,player1,player2):
+    """
+    takes parameters in order to properly draw the board
+    """
+    print('**********************************************************************\n')
+    print('* \t', end=' ')
+    for i in range(len(top_cup[0])): #iterates through top cups
+        print(' *Cup \t',end=' ')#prints for each item in top cups
+    print('\t* \n')
+    print('* \t', end=' ')
+    for i in range(len(top_cup[0])):
+        print(' *',top_cup[0][i],' \t', end=' ')#prints the cup number
+
+    print('\t* \n')
+
+    print('* \t',end=' ')
+    for i in range(len(top_cup[0])):
+        print(' *Stones', end=' ')#prints stones label
+    print('\t* \n')
+    print('*',player2,' \t',end=' ')#prints player 2 name
+    for i in range(len(top_cup[0])):
+        print(' *',top_cup[1][i],' \t',end=' ')
+
+    print('*',player1,' \n')#prints player 1 name
+
+    print('\t\t*******************************************************\n')
+
+    print('*',manc[0],' \t',end=' ')
+    for i in range(len(bottom_cup[0])):#iterate through bottom cup, repeat what we did for top cups
+        print(' *Cup \t',end=' ')
+
+    print('\t*',manc[1],' \n')
+    print('* \t',end=' ')
+    for i in range(len(bottom_cup[0])):
+        print(' *',bottom_cup[0][i],' \t',end=' ')
+
+    print('\t* \n')
+    print('* \t',end=' ')
+    for i in range(len(bottom_cup[0])):
+        print(' *Stones',end=' ')
+
+    print('\t* \n')
+    print('* \t',end=' ')
+    for i in range(len(top_cup[0])):
+        print(' *',bottom_cup[1][i],' \t',end=' ')
+
+    print('\t* \n')
+
+    print('**********************************************************************\n')
+
+def mancala_cups(row):
+    """initializes a 2d list for cups then creates cups for the row which is passed in as a parameter."""
+    cups=[ [0,0,0,0,0,0],
+           [0,0,0,0,0,0]]
+    j=0
+    if row==1: #if first row is passed as parameter
+        j=0
+        for i in range(6): #run through the row and add cup numbers 1-6
+            cups[0][i]=j+1
+            j=j+1
+    else: #if row is 2
+        j=7
+        for i in range(5,-1,-1): #loop runs reverse and runs through bottom from end to start adding the cup numbers 8-13
+            cups[0][i]=j+1
+            j= j+1
+    for i in range(6): # inserts 4 as number of stones in all columns
+        cups[1][i]=4
+    return cups
+
+def take_turn(top_cup,bottom_cup,mancala,player_one,player_two,player):
+    """this functions calls make_move method then checks if last stone is in mancala
+    and gives the player another turn accordingly, after also checking if he is the winner.
+    """
+    is_stone_in_mancala=False
+    move_cup=get_player_move(player)
+    is_stone_in_mancala=make_move(top_cup,bottom_cup,mancala,move_cup)
+    while is_stone_in_mancala: #last stone lands in mancala
+        print('Your last stone landed in a mancala.')
+        is_winner=check_winner(top_cup,bottom_cup) #check if player is winner by calling check_winner
+        if is_winner:
+            declare_winner(player_one,mancala,player,is_winner) #if player wins then call declare_winner
+            exit(0) #exit game
+
+        draw_board(top_cup,bottom_cup,mancala,player_one,player_two)#draw board
+        move_cup=get_player_move(player)#ask player for move
+        is_stone_in_mancala=make_move(top_cup,bottom_cup,mancala,move_cup) #make the move
+
+    if not is_stone_in_mancala: # if last stone not in mancala
+        draw_board(top_cup, bottom_cup,mancala,player_one,player_two) #draw board
+        return True
+    return False
+
+
+def declare_winner(player_1,mancala,player,is_winner):
+    """ function takes player and boolean if boolean is true then declares the player
+    as winner"""
+    if is_winner: #if is_winner is true
+        mancala_count=0 #sets mancala count to zero
+    if player==player_1: #if player is player one
+        mancala_count = mancala[1] #set player ones mancala to mancala count
+    else:
+        mancala_count = mancala[0] #otherwise set player twos mancala to mancala count
+
+    print(player, " is the Winner with mancala count :", mancala_count)
+
+def check_winner(top_cup,bottom_cup):
+    """checks top cup to see if all cups are zero and does the same for bottom cupsw"""
+    winner_top_cups = True
+    winner_bottom_cups = True
+    for i in range(len(top_cup[0])): #iterates through top cups
+        if top_cup[1][i] !=0: #if any cup has more than zero stones
+            winner_top_cups = False #top cups not winner
+            break
+
+    for i in range(len(bottom_cup[0])):#iterate through bottom cups
+        if bottom_cup[1][i] != 0:# if any cup has more than zero stones
+            winner_bottom_cups = False #bottom cups not winner
+            break
+
+    return  winner_top_cups or winner_bottom_cups #returns whichever is winner top or bottom
+
+def run_game():
+    """puts all functions required to run through game and uses while loop with conditionals to successfully together with correct parameters"""
+    player_1=' '
+    player_2=' '
+    #set both players to the names they input
+    player_1=get_player(1)
+    player_2=get_player(2)
+    print('players: ',player_1,', ',player_2) #print names of players
+    mancala=[0,0] #initialize mancala as array of 2 indexes that represent the mancalas
+    # make top cups and bottome cupsusing mancala_cups function
+    top_cups=mancala_cups(1)
+    bottom_cups=mancala_cups(2)
+    player_done=False
+    player=player_1
+    draw_board(top_cups,bottom_cups,mancala,player_1,player_2)
+    while True:
+        winner=check_winner(top_cups,bottom_cups) #check if there is a winner
+        if winner:
+            declare_winner(player_1,mancala,player,winner) #if there is a winner declare it
+            break
+        #if the player is not done, don't switch players
+        if not player_done and player==player_1:
+            player=player_1
+        elif not player_done and player==player_2:
+            player=player_2
+            #if player done switch to other player
+        elif player_done and player==player_1:
+            player=player_2
+        elif player_done and player==player_2:
+            player=player_1
+        player_done=take_turn(top_cups,bottom_cups,mancala,player_1,player_2,player)
+
+
+
+if __name__ == "__main__":
+    #calling run_game which puts all functions together to run game
+    run_game()
