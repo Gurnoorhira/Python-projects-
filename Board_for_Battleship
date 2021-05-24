@@ -1,0 +1,73 @@
+"""
+File:    board.py
+Author:  Gurnoor Hira
+Date:    4/30/2021
+E-mail:  gurnoorhira@gmail.com
+"""
+class Board:
+    def __init__(self, size=10, player_1='', player_2='', player_1_grid=[], player_2_grid=[], ships=[],ship_lengths=[]):
+        self.size = size
+        self.player_1 = player_1
+        self.player_2 = player_2
+        self.player_1_grid = player_1_grid
+        self.player_2_grid = player_2_grid
+        self.ships = ships
+        self.ship_lengths = ship_lengths
+
+    def register_shot(self,x, y, current_player):
+        is_player_done = True
+        if current_player == self.player_1:
+            grid = self.player_2_grid
+        else:
+            grid = self.player_1_grid
+        if x < 0 or x >= self.size or y >= self.size or y < 0:
+            print('this coordinate is out of grid, please try again!')
+            return False
+        if grid[x][y] == 'HH':
+            print('This coordinate has already been hit, please try again!')
+            return False
+        if grid[x][y] == 'MM':
+            print('This coordinate has already been missed, please try again!')
+            return False
+        if grid[x][y] == ' ':
+            grid[x][y] = 'MM'
+            print('This shot was a miss')
+        else:
+            ship = ''
+            if grid[x][y] == 'Ca':
+                ship = self.ships[0]
+            elif grid[x][y] == 'Ba':
+                ship = self.ships[1]
+            elif grid[x][y] == 'Cr':
+                ship = self.ships[2]
+            elif grid[x][y] == 'Su':
+                ship = self.ships[3]
+            elif grid[x][y] == 'De':
+                ship = self.ships[4]
+            grid[x][y] = 'HH'
+            print('You hit the', ship)
+            ship_sink = Board.is_ship_sink(self,grid, ship)
+            if ship_sink:
+                print('you sunk the ship:', ship)
+        return is_player_done
+
+    def is_ship_sink(self,grid, ship):
+        for row in range(len(grid)):
+            for col in range(len(grid[0])):
+                if grid[row][col] == ship[0:2]:
+                    return False
+        return True
+    def get_board(self, grid):
+        for i in range(self.size):
+            row = []
+            for j in range(self.size):
+                row.append(' ')
+            grid.append(row)
+
+    def place_ship(self,grid, ship, start_pos, end_pos, ship_length, right_or_down):
+        if right_or_down == 'r':
+            for col in range(end_pos, end_pos + ship_length):
+                grid[start_pos][col] = ship[0:2]
+        elif right_or_down == 'd':
+            for row in range(start_pos, start_pos + ship_length):
+                grid[row][end_pos] = ship[0:2]
